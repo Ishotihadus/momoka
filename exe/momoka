@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'momoka/cli'
+
+Momoka::CLI.new(ARGV).run

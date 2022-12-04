@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+
+require 'dotenv/parser'
+require 'momoka'
+require 'securerandom'
+require 'yaml'
+
+case ARGV[0]
+when 'init'
+  if File.exist?('./.momoka')
+    warn '.momoka already exists!'
+    exit 1
+  end
+
+  key = SecureRandom.random_bytes(48)
+  File.write('./.momoka', "#{Base64.strict_encode64(key)}\n")
+
+  if File.file?('.gitignore')
+    gitignore = File.read('.gitignore')
+    File.open('.gitignore', 'a') {|f| f.puts "\n.momoka"} unless gitignore =~ (/^.momoka$/)
+  end
+when 'encrypt'
+  text = $stdin.read.sub(/\n$/, '')
+  puts Momoka.encrypt(text, key_file: ARGV[1])
+when 'encenv'
+  text = $stdin.read.sub(/\n$/, '')
+  hash = Dotenv::Parser.new(text).call
+  key_file = ARGV[2]
+
+  hash.transform_values! do |value|
+    Momoka.encrypt(value, key_file: key_file)
+  end
+
+  puts hash.map {|k, v| "#{k}=#{v}"}.join("\n")
+when 'decrypt'
+  puts Momoka.load(ARGV[1] || '.env', key_file: ARGV[2]).to_yaml
+else
+  warn 'usage: momoka-cli init|encrypt|decrypt'
+  warn ''
+  warn '  init - generate a new key file and save it to .momoka'
+  warn '  usage: momoka-cli init'
+  warn ''
+  warn '  encrypt - encrypt a string'
+  warn '  usage: momoka-cli encrypt [key_file] < [text]'
+  warn ''
+  warn '  decrypt - decrypt .env file'
+  warn '  usage: momoka-cli decrypt [.env file] [key_file]'
+end
