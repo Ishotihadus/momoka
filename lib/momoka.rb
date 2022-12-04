@@ -64,14 +64,18 @@ module Momoka
     end
 
     def decrypt!(env, key_file: nil)
-      key = default_key(key_file: key_file)
-
-      dec = OpenSSL::Cipher.new('AES-256-CBC').decrypt
-      dec.key = key.byteslice(0, 32)
-      dec.iv = key.byteslice(32, 16)
+      dec = nil
 
       env.transform_values! do |v|
         next v unless v.size >= 10 && v[0, 8] == ':momoka:' && v[-1] == ':'
+
+        unless dec
+          key = default_key(key_file: key_file)
+
+          dec = OpenSSL::Cipher.new('AES-256-CBC').decrypt
+          dec.key = key.byteslice(0, 32)
+          dec.iv = key.byteslice(32, 16)
+        end
 
         _empty, _momoka, data = v.split(':')
         data = Base64.decode64(data)
