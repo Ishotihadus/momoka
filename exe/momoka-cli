@@ -43,6 +43,9 @@ else
   warn '  encrypt - encrypt a string'
   warn '  usage: momoka-cli encrypt [key_file] < [text]'
   warn ''
+  warn '  encenv - encrypt a .env file'
+  warn '  usage: momoka-cli encenv [key_file] < [env file]'
+  warn ''
   warn '  decrypt - decrypt .env file'
   warn '  usage: momoka-cli decrypt [.env file] [key_file]'
 end
